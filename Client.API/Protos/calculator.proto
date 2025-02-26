@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+option csharp_namespace = "ServiceA";
+
+package calculator;
+
+// Define the gRPC service
+service CalculatorService {
+  rpc Add (AddRequest) returns (AddResponse);
+}
+
+// Define the request message with two parameters
+message AddRequest {
+  int32 number1 = 1;
+  int32 number2 = 2;
+}
+
+// Define the response message
+message AddResponse {
+  int32 result = 1;
+}
