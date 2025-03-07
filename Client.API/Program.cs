@@ -9,7 +9,7 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddGrpcClient<CalculatorService.CalculatorServiceClient>(o =>
     {
-        o.Address = new Uri("http://localhost:5242"); // Ensure HTTP is used
+        o.Address = new Uri("http://service_a:8080"); // Ensure HTTP is used
     })
     .ConfigurePrimaryHttpMessageHandler(() =>
         new HttpClientHandler

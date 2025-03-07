@@ -1,0 +1,7 @@
+global:
+  scrape_interval: 15s # How often to scrape metrics
+
+scrape_configs:
+  - job_name: 'service_b'
+    static_configs:
+      - targets: ['service_b:8080'] # Replace with your service's address

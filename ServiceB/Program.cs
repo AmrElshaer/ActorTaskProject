@@ -1,10 +1,27 @@
+using System.Diagnostics.Metrics;
 using MassTransit;
 using Microsoft.EntityFrameworkCore;
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
+using Prometheus;
 using ServiceB;
 using ServiceB.Consumers;
 
 var builder = WebApplication.CreateBuilder(args);
-
+builder.Services.AddControllers();
+builder.Services.AddOpenTelemetry()
+    .WithMetrics(metrics => metrics
+        .AddAspNetCoreInstrumentation()
+        .AddHttpClientInstrumentation()
+        .AddMeter("MyServiceMetrics") 
+        .AddPrometheusExporter())
+    .WithTracing(tracing =>
+    {
+        tracing.AddAspNetCoreInstrumentation()
+            .AddGrpcClientInstrumentation()
+            .AddConsoleExporter();
+    });
 builder.Services
     .AddEndpointsApiExplorer();
 builder.Services
@@ -18,7 +35,7 @@ builder.Services.AddCap(options =>
     options.UseSqlServer(connectionString!); // Store messages in DB
     options.UseRabbitMQ(rabbitMqOptions =>
     {
-        rabbitMqOptions.HostName = "localhost"; // Replace with the correct hostname or IP
+        rabbitMqOptions.HostName = "rabbitmq"; // Replace with the correct hostname or IP
         rabbitMqOptions.Port = 5672; // Default RabbitMQ port
         rabbitMqOptions.UserName = "guest"; // Default username
         rabbitMqOptions.Password = "guest"; // Default password
@@ -31,7 +48,7 @@ builder.Services.AddMassTransit(x =>
 {
     x.UsingRabbitMq((context, cfg) =>
     {
-        cfg.Host("localhost", "/", h =>
+        cfg.Host(new Uri("amqp://rabbitmq:5672"), h =>
         {
             h.Username("guest");
             h.Password("guest");
@@ -41,8 +58,10 @@ builder.Services.AddMassTransit(x =>
 
 
 var app = builder.Build();
+app.UseOpenTelemetryPrometheusScrapingEndpoint();
 // Enable middleware for routing
 app.UseRouting();
+// Expose Prometheus metrics endpoint
 
 
 // Enable Swagger (Optional)
@@ -64,5 +83,10 @@ app.MapGet("get-current-number", async () =>
     // Write the updated number back to the file
 
     return existingNumber;
+});
+app.UseEndpoints(endpoints =>
+{
+    endpoints.MapMetrics(); // Expose metrics at /metrics
+    endpoints.MapControllers();
 });
 app.Run();

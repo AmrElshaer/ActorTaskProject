@@ -1,5 +1,8 @@
-﻿using DotNetCore.CAP;
+﻿using System.Diagnostics;
+using System.Diagnostics.Metrics;
+using DotNetCore.CAP;
 using Grpc.Core;
+using OpenTelemetry.Metrics;
 using ServiceA.Entities;
 using Shared.Events;
 

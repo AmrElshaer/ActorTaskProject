@@ -5,7 +5,9 @@ using ServiceA.Services;
 using CalculatorService = ServiceA.Services.CalculatorService;
 
 var builder = WebApplication.CreateBuilder(args);
+
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+
 builder.Services.AddDbContext<ServiceAdbContext>(options =>
     options.UseSqlServer(connectionString));
 
@@ -14,7 +16,7 @@ builder.Services.AddCap(options =>
     options.UseSqlServer(connectionString!); // Store messages in DB
     options.UseRabbitMQ(rabbitMqOptions =>
     {
-        rabbitMqOptions.HostName = "localhost"; // Replace with the correct hostname or IP
+        rabbitMqOptions.HostName = "rabbitmq"; // Replace with the correct hostname or IP
         rabbitMqOptions.Port = 5672;           // Default RabbitMQ port
         rabbitMqOptions.UserName = "guest";    // Default username
         rabbitMqOptions.Password = "guest";    // Default password
@@ -27,7 +29,7 @@ builder.Services.AddMassTransit(x =>
 {
     x.UsingRabbitMq((context, cfg) =>
     {
-        cfg.Host(new Uri("amqp://localhost:5672"), "/", h =>
+        cfg.Host(new Uri("amqp://rabbitmq:5672"), h =>
         {
             h.Username("guest");
             h.Password("guest");
@@ -38,7 +40,6 @@ builder.Services.AddMassTransit(x =>
 builder.Services.AddGrpc();
 
 var app = builder.Build();
-
 // Configure the HTTP request pipeline.
 app.MapGrpcService<GreeterService>();
 app.MapGrpcService<CalculatorService>();
