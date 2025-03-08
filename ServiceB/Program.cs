@@ -11,10 +11,11 @@ using ServiceB.Consumers;
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 builder.Services.AddOpenTelemetry()
+    .ConfigureResource(resource=> resource.AddService("ServiceB"))
     .WithMetrics(metrics => metrics
         .AddAspNetCoreInstrumentation()
         .AddHttpClientInstrumentation()
-        .AddMeter("MyServiceMetrics") 
+        .AddMeter("ServiceBMetrics") 
         .AddPrometheusExporter())
     .WithTracing(tracing =>
     {
@@ -62,7 +63,8 @@ app.UseOpenTelemetryPrometheusScrapingEndpoint();
 // Enable middleware for routing
 app.UseRouting();
 // Expose Prometheus metrics endpoint
-
+app.UseHttpMetrics(); // ✅ Enable Prometheus metrics
+app.MapMetrics();     // ✅ Expose /metrics endpoint
 
 // Enable Swagger (Optional)
 app.UseSwagger();
@@ -71,6 +73,7 @@ app.UseSwaggerUI();
 app.UseHttpsRedirection();
 app.MapGet("get-current-number", async () =>
 {
+  
     var fileStoragePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "FileStorage", "data.txt");
     if (!File.Exists(fileStoragePath))
         await File.WriteAllTextAsync(fileStoragePath, "0"); // Initialize with 0 if the file is missing
@@ -81,7 +84,8 @@ app.MapGet("get-current-number", async () =>
             out var existingNumber)) existingNumber = 0; // Fallback if the file contains invalid data
 
     // Write the updated number back to the file
-
+    var latencyHistogram=Metrics.CreateHistogram("total_number_histogram", "test historgram");
+    latencyHistogram.Observe(existingNumber);
     return existingNumber;
 });
 app.UseEndpoints(endpoints =>

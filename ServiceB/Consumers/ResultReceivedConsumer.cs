@@ -1,4 +1,5 @@
-﻿using DotNetCore.CAP;
+﻿using System.Diagnostics.Metrics;
+using DotNetCore.CAP;
 using Prometheus;
 using Shared.Events;
 
@@ -7,18 +8,25 @@ namespace ServiceB.Consumers;
 public class ResultReceivedConsumer:ICapSubscribe
 {
     private static readonly string FileStoragePath = Path.Combine("/app/FileStorage", "data.txt");
-    private readonly Counter _latencyCounter;
+   
+    private static readonly Meter Meter = new Meter("ServiceBMetrics");
 
+    // Define a Histogram
+    private static readonly Histogram<double> MessageProcessingTime = Meter.CreateHistogram<double>(
+        "queue_latency_seconds",
+        "seconds",
+        "Time a message spends in the queue before being consumed"
+    );
     public ResultReceivedConsumer()
     {
-        _latencyCounter = Metrics.CreateCounter("queue_latency_seconds", "Latency of messages in the queue"); 
+      
     }
     [CapSubscribe("new-number-added")]
     public async Task Consume(NewNumberAddedEvent message)
     {
         var consumeTime = DateTime.UtcNow;
         var latency = (consumeTime - message.CreationDate).TotalSeconds;
-        _latencyCounter.Inc(latency);
+        MessageProcessingTime.Record(latency);
         var receivedNumber = message.Result;
         Console.WriteLine($"Received Number: {receivedNumber}");
 
