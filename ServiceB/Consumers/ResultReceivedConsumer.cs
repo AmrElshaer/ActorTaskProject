@@ -1,6 +1,7 @@
-﻿using System.Diagnostics.Metrics;
+﻿using System.Diagnostics;
+using System.Diagnostics.Metrics;
 using DotNetCore.CAP;
-using Prometheus;
+using Shared;
 using Shared.Events;
 
 namespace ServiceB.Consumers;
@@ -25,9 +26,14 @@ public class ResultReceivedConsumer:ICapSubscribe
     public async Task Consume(NewNumberAddedEvent message)
     {
         var consumeTime = DateTime.UtcNow;
-        var latency = (consumeTime - message.CreationDate).TotalSeconds;
+        var latency = (consumeTime - message.CreationDate).TotalMilliseconds;
         MessageProcessingTime.Record(latency);
         var receivedNumber = message.Result;
+        using Activity? activity = DiagnosticConfig.ServiceB.StartActivity($"{nameof(message)} consnumer two number");
+        activity?.AddTag("consumer calculate two type", nameof(message));
+        activity?.AddTag("result", message.Result);
+        activity?.AddTag("creationDate", message.CreationDate);
+        activity?.AddTag("total mill second latency ", latency);
         Console.WriteLine($"Received Number: {receivedNumber}");
 
         try

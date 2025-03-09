@@ -1,11 +1,25 @@
 using MassTransit;
 using Microsoft.EntityFrameworkCore;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 using ServiceA;
 using ServiceA.Services;
+using Shared;
 using CalculatorService = ServiceA.Services.CalculatorService;
 
 var builder = WebApplication.CreateBuilder(args);
-
+builder.Services.AddOpenTelemetry()
+    .WithTracing(tracerProviderBuilder =>
+    {
+        tracerProviderBuilder
+            .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService(DiagnosticConfig.ServiceA.Name))
+            .AddSource(MassTransit.Logging.DiagnosticHeaders.DefaultListenerName)
+            .AddAspNetCoreInstrumentation()  // For incoming HTTP/gRPC requests
+            .AddGrpcClientInstrumentation()
+            .AddSqlClientInstrumentation()  // For database tracing
+            .AddCapInstrumentation()
+            .AddOtlpExporter();
+    });
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 
 builder.Services.AddDbContext<ServiceAdbContext>(options =>

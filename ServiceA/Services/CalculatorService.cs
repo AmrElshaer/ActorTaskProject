@@ -1,9 +1,8 @@
 ﻿using System.Diagnostics;
-using System.Diagnostics.Metrics;
 using DotNetCore.CAP;
 using Grpc.Core;
-using OpenTelemetry.Metrics;
 using ServiceA.Entities;
+using Shared;
 using Shared.Events;
 
 namespace ServiceA.Services;
@@ -12,7 +11,10 @@ public class CalculatorService(ICapPublisher capPublisher,ServiceAdbContext dbCo
 {
     public override async Task<AddResponse> Add(AddRequest request, ServerCallContext context)
     {
-        
+        using Activity? activity = DiagnosticConfig.ServiceA.StartActivity($"{nameof(request)} calculate two number");
+        activity?.AddTag("publish calculate two type", nameof(request));
+        activity?.AddTag("Number1", request.Number1);
+        activity?.AddTag("Number2", request.Number2);
         var result = request.Number1 + request.Number2;
        await  using (var ctx= await dbContext.Database.BeginTransactionAsync(capPublisher,autoCommit:true))
        {

@@ -7,6 +7,7 @@ using OpenTelemetry.Trace;
 using Prometheus;
 using ServiceB;
 using ServiceB.Consumers;
+using Shared;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
@@ -19,9 +20,14 @@ builder.Services.AddOpenTelemetry()
         .AddPrometheusExporter())
     .WithTracing(tracing =>
     {
-        tracing.AddAspNetCoreInstrumentation()
+        tracing
+            .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService(DiagnosticConfig.ServiceB.Name))
+            .AddSource(MassTransit.Logging.DiagnosticHeaders.DefaultListenerName)
+            .AddAspNetCoreInstrumentation()  // For incoming HTTP/gRPC requests
             .AddGrpcClientInstrumentation()
-            .AddConsoleExporter();
+            .AddSqlClientInstrumentation()// For database tracing
+            .AddCapInstrumentation()
+            .AddOtlpExporter();
     });
 builder.Services
     .AddEndpointsApiExplorer();

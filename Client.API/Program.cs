@@ -1,10 +1,25 @@
+using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 using ServiceA;
+using Shared;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+builder.Services.AddOpenTelemetry()
+    .WithTracing(tracerProviderBuilder =>
+{
+    tracerProviderBuilder
+        .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService(DiagnosticConfig.Client.Name))
+        .AddSource(MassTransit.Logging.DiagnosticHeaders.DefaultListenerName)
+        .AddAspNetCoreInstrumentation()  // For incoming HTTP/gRPC requests
+        .AddGrpcClientInstrumentation()
+        .AddSqlClientInstrumentation()// For database tracing
+        .AddOtlpExporter();
+});
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddGrpcClient<CalculatorService.CalculatorServiceClient>(o =>
@@ -33,6 +48,10 @@ var summaries = new[]
 };
 app.MapPost("/calculator/add", async ([FromBody]AddCommand command,CalculatorService.CalculatorServiceClient client) =>
 {
+    using Activity? activity = DiagnosticConfig.Client.StartActivity($"{nameof(client)} send to add two number");
+    activity?.AddTag("client-send-add-numbers", nameof(command));
+    activity?.AddTag("Number1", command.Number1);
+    activity?.AddTag("Number2", command.Number2);
     var request = new AddRequest { Number1 = command.Number1, Number2 = command.Number2 };
     var response = await client.AddAsync(request);
     return response.Result;
