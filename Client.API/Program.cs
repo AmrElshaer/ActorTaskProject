@@ -14,7 +14,7 @@ builder.Services.AddOpenTelemetry()
 {
     tracerProviderBuilder
         .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService(DiagnosticConfig.Client.Name))
-        .AddSource(MassTransit.Logging.DiagnosticHeaders.DefaultListenerName)
+        .AddSource(DiagnosticConfig.Client.Name) 
         .AddAspNetCoreInstrumentation()  // For incoming HTTP/gRPC requests
         .AddGrpcClientInstrumentation()
         .AddSqlClientInstrumentation()// For database tracing
@@ -48,7 +48,7 @@ var summaries = new[]
 };
 app.MapPost("/calculator/add", async ([FromBody]AddCommand command,CalculatorService.CalculatorServiceClient client) =>
 {
-    using Activity? activity = DiagnosticConfig.Client.StartActivity($"{nameof(client)} send to add two number");
+    using Activity? activity = DiagnosticConfig.Client.StartActivity("call service a to add two number");
     activity?.AddTag("client-send-add-numbers", nameof(command));
     activity?.AddTag("Number1", command.Number1);
     activity?.AddTag("Number2", command.Number2);

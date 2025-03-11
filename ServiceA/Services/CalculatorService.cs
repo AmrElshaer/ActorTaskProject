@@ -11,7 +11,7 @@ public class CalculatorService(ICapPublisher capPublisher,ServiceAdbContext dbCo
 {
     public override async Task<AddResponse> Add(AddRequest request, ServerCallContext context)
     {
-        using Activity? activity = DiagnosticConfig.ServiceA.StartActivity($"{nameof(request)} calculate two number");
+        using Activity? activity = DiagnosticConfig.ServiceA.StartActivity("Publish result to queue");
         activity?.AddTag("publish calculate two type", nameof(request));
         activity?.AddTag("Number1", request.Number1);
         activity?.AddTag("Number2", request.Number2);

@@ -25,11 +25,13 @@ public class ResultReceivedConsumer:ICapSubscribe
     [CapSubscribe("new-number-added")]
     public async Task Consume(NewNumberAddedEvent message)
     {
+        
+        using Activity? activity = DiagnosticConfig.ServiceB.StartActivity("consume message from queue");
         var consumeTime = DateTime.UtcNow;
         var latency = (consumeTime - message.CreationDate).TotalMilliseconds;
         MessageProcessingTime.Record(latency);
         var receivedNumber = message.Result;
-        using Activity? activity = DiagnosticConfig.ServiceB.StartActivity($"{nameof(message)} consnumer two number");
+        
         activity?.AddTag("consumer calculate two type", nameof(message));
         activity?.AddTag("result", message.Result);
         activity?.AddTag("creationDate", message.CreationDate);

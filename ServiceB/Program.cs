@@ -22,7 +22,7 @@ builder.Services.AddOpenTelemetry()
     {
         tracing
             .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService(DiagnosticConfig.ServiceB.Name))
-            .AddSource(MassTransit.Logging.DiagnosticHeaders.DefaultListenerName)
+            .AddSource(DiagnosticConfig.ServiceB.Name)
             .AddAspNetCoreInstrumentation()  // For incoming HTTP/gRPC requests
             .AddGrpcClientInstrumentation()
             .AddSqlClientInstrumentation()// For database tracing
