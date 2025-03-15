@@ -3,17 +3,20 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
-using ServiceA;
+using ServiceB;
 
 #nullable disable
 
-namespace ServiceA.Persistence.Migrations
+namespace ServiceB.Persistence.Migrations
 {
-    [DbContext(typeof(ServiceAdbContext))]
-    partial class ServiceAdbContextModelSnapshot : ModelSnapshot
+    [DbContext(typeof(ServiceBdbContext))]
+    [Migration("20250315111019_Initial")]
+    partial class Initial
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -190,28 +193,6 @@ namespace ServiceA.Persistence.Migrations
                     b.HasIndex("Created");
 
                     b.ToTable("OutboxState");
-                });
-
-            modelBuilder.Entity("ServiceA.Entities.Message", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int>("Number1")
-                        .HasColumnType("int");
-
-                    b.Property<int>("Number2")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Messages");
                 });
 
             modelBuilder.Entity("MassTransit.EntityFrameworkCoreIntegration.OutboxMessage", b =>

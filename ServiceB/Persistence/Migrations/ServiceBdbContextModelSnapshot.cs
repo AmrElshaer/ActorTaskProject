@@ -4,14 +4,14 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
-using ServiceA;
+using ServiceB;
 
 #nullable disable
 
-namespace ServiceA.Persistence.Migrations
+namespace ServiceB.Persistence.Migrations
 {
-    [DbContext(typeof(ServiceAdbContext))]
-    partial class ServiceAdbContextModelSnapshot : ModelSnapshot
+    [DbContext(typeof(ServiceBdbContext))]
+    partial class ServiceBdbContextModelSnapshot : ModelSnapshot
     {
         protected override void BuildModel(ModelBuilder modelBuilder)
         {
@@ -190,28 +190,6 @@ namespace ServiceA.Persistence.Migrations
                     b.HasIndex("Created");
 
                     b.ToTable("OutboxState");
-                });
-
-            modelBuilder.Entity("ServiceA.Entities.Message", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int>("Number1")
-                        .HasColumnType("int");
-
-                    b.Property<int>("Number2")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Messages");
                 });
 
             modelBuilder.Entity("MassTransit.EntityFrameworkCoreIntegration.OutboxMessage", b =>

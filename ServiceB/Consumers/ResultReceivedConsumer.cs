@@ -1,12 +1,12 @@
 ﻿using System.Diagnostics;
 using System.Diagnostics.Metrics;
-using DotNetCore.CAP;
+using MassTransit;
 using Shared;
 using Shared.Events;
 
 namespace ServiceB.Consumers;
 
-public class ResultReceivedConsumer:ICapSubscribe
+public class ResultReceivedConsumer:IConsumer<NewNumberAddedEvent>
 {
     private static readonly string FileStoragePath = Path.Combine("/app/FileStorage", "data.txt");
    
@@ -22,10 +22,10 @@ public class ResultReceivedConsumer:ICapSubscribe
     {
       
     }
-    [CapSubscribe("new-number-added")]
-    public async Task Consume(NewNumberAddedEvent message)
+    
+    public async Task Consume(ConsumeContext<NewNumberAddedEvent> context)
     {
-        
+        var message = context.Message;
         using Activity? activity = DiagnosticConfig.ServiceB.StartActivity("consume message from queue");
         var consumeTime = DateTime.UtcNow;
         var latency = (consumeTime - message.CreationDate).TotalMilliseconds;

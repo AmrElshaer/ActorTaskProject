@@ -1,5 +1,5 @@
-using System.Diagnostics.Metrics;
 using MassTransit;
+using MassTransit.Logging;
 using Microsoft.EntityFrameworkCore;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
@@ -23,6 +23,7 @@ builder.Services.AddOpenTelemetry()
         tracing
             .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService(DiagnosticConfig.ServiceB.Name))
             .AddSource(DiagnosticConfig.ServiceB.Name)
+            .AddSource(DiagnosticHeaders.DefaultListenerName)
             .AddAspNetCoreInstrumentation()  // For incoming HTTP/gRPC requests
             .AddGrpcClientInstrumentation()
             .AddSqlClientInstrumentation()// For database tracing
@@ -53,6 +54,14 @@ builder.Services.AddCap(options =>
 // Add MassTransit with RabbitMQ
 builder.Services.AddMassTransit(x =>
 {
+    x.AddConsumer<ResultReceivedConsumer>();
+
+    x.SetKebabCaseEndpointNameFormatter();
+    x.AddEntityFrameworkOutbox<ServiceBdbContext>(o =>
+    {
+        o.UseSqlServer().UseBusOutbox();
+    });
+    x.AddConfigureEndpointsCallback((context, name, cfg) => { cfg.UseEntityFrameworkOutbox<ServiceBdbContext>(context); });
     x.UsingRabbitMq((context, cfg) =>
     {
         cfg.Host(new Uri("amqp://rabbitmq:5672"), h =>
@@ -60,6 +69,7 @@ builder.Services.AddMassTransit(x =>
             h.Username("guest");
             h.Password("guest");
         });
+        cfg.ConfigureEndpoints(context);
     });
 });
 
